@@ -4,10 +4,22 @@ import { REPO_REGEX } from "@/lib/scoring";
 
 export async function POST(req: Request) {
   const body = (await req.json().catch(() => null)) as { full_name?: string } | null;
-  const fullName = (body?.full_name ?? "").trim().toLowerCase();
+
+  const cleaned = String(body?.full_name ?? "")
+    .trim()
+    .replace(/^https?:\/\/(www\.)?github\.com\//i, "")
+    .replace(/\.git$/i, "")
+    .replace(/^\/+|\/+$/g, "");
+
+  const parts = cleaned.split("/").filter(Boolean);
+  const fullName =
+    parts.length >= 2 ? `${parts[0]}/${parts[1]}`.toLowerCase() : cleaned.toLowerCase();
 
   if (!REPO_REGEX.test(fullName)) {
-    return NextResponse.json({ error: "Use owner/repo format (e.g. vercel/next.js)" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Use owner/repo or a valid GitHub repo URL (e.g. vercel/next.js)" },
+      { status: 400 }
+    );
   }
 
   const countRes = await pool.query<{ count: string }>("SELECT COUNT(*) FROM repos");
