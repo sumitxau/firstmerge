@@ -1,0 +1,8 @@
+node_modules/
+.next/
+dist/
+*.exe
+worker/worker
+.env
+.env.*
+!.env.example
